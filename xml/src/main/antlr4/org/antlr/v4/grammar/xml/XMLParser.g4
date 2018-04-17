@@ -33,18 +33,36 @@ options { tokenVocab=XMLLexer; }
 
 document    :   prolog? misc* element misc*;
 
-prolog      :   XMLDeclOpen attribute* SPECIAL_CLOSE ;
+prolog      :   XMLDeclOpen attributes? SPECIAL_CLOSE ;
 
 content     :   chardata?
-                ((element | reference | CDATA | PI | COMMENT) chardata?)* ;
+                contentPiece* ;
+                
+contentPiece:   ((element | reference | CDATA | PI | COMMENT) chardata?)
+            ;
 
-element     :   '<' Name attribute* '>' content '<' '/' Name '>'
-            |   '<' Name attribute* '/>'
+element     :   contentTag
+            |   noContentTag
+            ;
+
+contentTag  :   openTag content closeTag
+            ;
+
+openTag     :   OPEN Name attributes? CLOSE
+            ;
+
+closeTag    :   OPEN SLASH Name CLOSE
+            ;
+
+noContentTag:   OPEN Name attributes? SLASH_CLOSE
             ;
 
 reference   :   EntityRef | CharRef ;
 
-attribute   :   Name '=' STRING ; // Our STRING is AttValue in spec
+attributes  :   attribute+
+            ;
+            
+attribute   :   Name EQUALS STRING ; // Our STRING is AttValue in spec
 
 /** ``All text that is not markup constitutes the character data of
  *  the document.''

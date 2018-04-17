@@ -9,8 +9,8 @@ public class TestXml {
 
 
     private static File [] gfiles = new File [] {
-            new File("../xml/XMLLexer.g4"),
-            new File("../xml/XMLParser.g4")
+            new File("../xml/src/main/antlr4/org/antlr/v4/grammar/xml/XMLLexer.g4"),
+            new File("../xml/src/main/antlr4/org/antlr/v4/grammar/xml/XMLParser.g4")
     };
 
     @Test
