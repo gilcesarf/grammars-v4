@@ -17,7 +17,7 @@ pair
    : STRING ':' value
    ;
 
-array
+arr
    : '[' value (',' value)* ']'
    | '[' ']'
    ;
@@ -26,7 +26,7 @@ value
    : STRING
    | NUMBER
    | obj
-   | array
+   | arr
    | 'true'
    | 'false'
    | 'null'
@@ -34,7 +34,7 @@ value
 
 
 STRING
-   : '"' (ESC | ~ ["\\])* '"'
+   : '"' (ESC | SAFECODEPOINT)* '"'
    ;
 
 
@@ -50,6 +50,11 @@ fragment UNICODE
 
 fragment HEX
    : [0-9a-fA-F]
+   ;
+
+
+fragment SAFECODEPOINT
+   : ~ ["\\\u0000-\u001F]
    ;
 
 

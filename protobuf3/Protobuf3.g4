@@ -51,11 +51,21 @@ packageStatement
 //
 
 option
-    :   'option' optionName '=' constant ';'
+    :   'option' optionName '=' (constant | optionBody)  ';'
     ;
 
 optionName
-    :   (Ident | '(' fullIdent ')' ) ('.' Ident)*
+    :   (Ident | '(' fullIdent ')' ) ('.' (Ident | reservedWord))*
+    ;
+
+optionBody
+    : '{'
+        (optionBodyVariable)*
+      '}'
+    ;
+
+optionBodyVariable
+    : optionName ':' constant
     ;
 
 //
@@ -220,6 +230,17 @@ keyType
     |   'string'
     ;
 
+reservedWord
+    :   MESSAGE
+    |   OPTION
+    |   PACKAGE
+    |   SERVICE
+    |   STREAM
+    |   STRING
+    |   SYNTAX
+    |   WEAK
+    |   RPC
+    ;
 //
 // Lexical elements
 //
@@ -307,6 +328,7 @@ messageOrEnumName
 
 fieldName
     :   Ident
+    |   reservedWord
     ;
 
 oneofName
@@ -330,7 +352,7 @@ messageType
     ;
 
 messageOrEnumType
-    :   '.'? (Ident '.')* messageOrEnumName
+    :   '.'? ( (Ident | reservedWord) '.')* messageOrEnumName
     ;
 
 // Integer literals
