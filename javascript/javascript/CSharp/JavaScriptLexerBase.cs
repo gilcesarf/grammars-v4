@@ -1,6 +1,7 @@
 using Antlr4.Runtime;
 using System.Collections.Generic;
-using static JavaScriptParseTree.JavaScriptParser;
+using System.IO;
+using static JavaScriptParser;
 
 /// <summary>
 /// All lexer methods that used in grammar (IsStrictMode)
@@ -28,8 +29,23 @@ public abstract class JavaScriptLexerBase : Lexer
     /// </summary>
     private bool _useStrictCurrent = false;
 
+    /// <summary>
+    /// Keeps track of the the current depth of nested template string backticks.
+    /// E.g. after the X in:
+    ///
+    /// `${a ? `${X
+    ///
+    /// templateDepth will be 2. This variable is needed to determine if a `}` is a
+    /// plain CloseBrace, or one that closes an expression inside a template string.
+    /// </summary>
+    private int _templateDepth = 0;
+
     public JavaScriptLexerBase(ICharStream input)
         : base(input)
+    {
+    }
+
+    public JavaScriptLexerBase(ICharStream input, TextWriter output, TextWriter errorOutput) : this(input)
     {
     }
 
@@ -53,6 +69,11 @@ public abstract class JavaScriptLexerBase : Lexer
     public bool IsStrictMode()
     {
         return _useStrictCurrent;
+    }
+
+    public bool IsInTemplateString()
+    {
+        return _templateDepth > 0;
     }
 
     /// <summary>
@@ -104,6 +125,16 @@ public abstract class JavaScriptLexerBase : Lexer
         }
     }
 
+    public void IncreaseTemplateDepth()
+    {
+        _templateDepth++;
+    }
+
+    public void DecreaseTemplateDepth()
+    {
+        _templateDepth--;
+    }
+
     /// <summary>
     /// Returns true if the lexer can match a regex literal.
     /// </summary>
@@ -136,5 +167,15 @@ public abstract class JavaScriptLexerBase : Lexer
                 // In all other cases, a regex literal _is_ possible.
                 return true;
         }
+    }
+
+    public override void Reset()
+    {
+        scopeStrictModes.Clear();
+        _lastToken = null;
+        _useStrictDefault = false;
+        _useStrictCurrent = false;
+        _templateDepth = 0;
+        base.Reset();
     }
 }

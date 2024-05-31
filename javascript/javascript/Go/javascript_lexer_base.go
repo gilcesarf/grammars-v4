@@ -1,10 +1,10 @@
 package parser
 
-import "github.com/antlr/antlr4/runtime/Go/antlr"
+import "github.com/antlr4-go/antlr/v4"
 
 // JavaScriptLexerBase state
 type JavaScriptLexerBase struct {
-	*antlr.LexerBase
+	*antlr.BaseLexer
 
 	scopeStrictModes []bool
 	stackLength      int
@@ -13,10 +13,11 @@ type JavaScriptLexerBase struct {
 	lastToken        antlr.Token
 	useStrictDefault bool
 	useStrictCurrent bool
+	templateDepth    int
 }
 
-func (l *JavaScriptLexerBase) IsStartOfFile() {
-    return l.lastToken == nil
+func (l *JavaScriptLexerBase) IsStartOfFile() bool {
+	return l.lastToken == nil
 }
 
 func (l *JavaScriptLexerBase) pushStrictModeScope(v bool) {
@@ -43,7 +44,7 @@ func (l *JavaScriptLexerBase) IsStrictMode() bool {
 
 // NextToken from the character stream.
 func (l *JavaScriptLexerBase) NextToken() antlr.Token {
-	next := l.LexerBase.NextToken() // Get next token
+	next := l.BaseLexer.NextToken() // Get next token
 	if next.GetChannel() == antlr.TokenDefaultChannel {
 		// Keep track of the last token on default channel
 		l.lastToken = next
@@ -100,4 +101,27 @@ func (l *JavaScriptLexerBase) IsRegexPossible() bool {
 	default:
 		return true
 	}
+}
+
+func (l *JavaScriptLexerBase) IncreaseTemplateDepth() {
+	l.templateDepth++
+}
+
+func (l *JavaScriptLexerBase) DecreaseTemplateDepth() {
+	l.templateDepth--
+}
+
+func (l *JavaScriptLexerBase) IsInTemplateString() bool {
+	return l.templateDepth > 0
+}
+
+func (l *JavaScriptLexerBase) Reset() {
+    l.scopeStrictModes = nil
+    l.stackLength = 0
+    l.stackIx = 0
+    l.lastToken = nil
+    l.useStrictDefault = false
+    l.useStrictCurrent = false
+    l.templateDepth = 0
+	l.BaseLexer.Reset()
 }

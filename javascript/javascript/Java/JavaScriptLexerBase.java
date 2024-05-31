@@ -1,6 +1,7 @@
 import org.antlr.v4.runtime.*;
 
-import java.util.Stack;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * All lexer methods that used in grammar (IsStrictMode)
@@ -12,7 +13,7 @@ public abstract class JavaScriptLexerBase extends Lexer
      * Stores values of nested modes. By default mode is strict or
      * defined externally (useStrictDefault)
      */
-    private Stack<Boolean> scopeStrictModes = new Stack<Boolean>();
+    private final Deque<Boolean> scopeStrictModes = new ArrayDeque<>();
 
     private Token lastToken = null;
     /**
@@ -25,6 +26,16 @@ public abstract class JavaScriptLexerBase extends Lexer
      * Can be defined during parsing, see StringFunctions.js and StringGlobal.js samples
      */
     private boolean useStrictCurrent = false;
+    /**
+     * Keeps track of the the current depth of nested template string backticks.
+     * E.g. after the X in:
+     *
+     * `${a ? `${X
+     *
+     * templateDepth will be 2. This variable is needed to determine if a `}` is a
+     * plain CloseBrace, or one that closes an expression inside a template string.
+     */
+    private int templateDepth = 0;
 
     public JavaScriptLexerBase(CharStream input) {
         super(input);
@@ -45,6 +56,10 @@ public abstract class JavaScriptLexerBase extends Lexer
 
     public boolean IsStrictMode() {
         return useStrictCurrent;
+    }
+
+    public boolean IsInTemplateString() {
+        return this.templateDepth > 0;
     }
 
     /**
@@ -94,17 +109,25 @@ public abstract class JavaScriptLexerBase extends Lexer
         }
     }
 
+    public void IncreaseTemplateDepth() {
+        this.templateDepth++;
+    }
+
+    public void DecreaseTemplateDepth() {
+        this.templateDepth--;
+    }
+
     /**
      * Returns {@code true} if the lexer can match a regex literal.
      */
     protected boolean IsRegexPossible() {
-                                       
+
         if (this.lastToken == null) {
             // No token has been produced yet: at the start of the input,
             // no division is possible, so a regex literal _is_ possible.
             return true;
         }
-        
+
         switch (this.lastToken.getType()) {
             case JavaScriptLexer.Identifier:
             case JavaScriptLexer.NullLiteral:
@@ -124,5 +147,15 @@ public abstract class JavaScriptLexerBase extends Lexer
                 // In all other cases, a regex literal _is_ possible.
                 return true;
         }
+    }
+
+    @Override
+    public void reset() {
+        this.scopeStrictModes.clear();
+        this.lastToken = null;
+        this.useStrictDefault = false;
+        this.useStrictCurrent = false;
+        this.templateDepth = 0;
+        super.reset();
     }
 }
